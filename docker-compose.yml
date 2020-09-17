@@ -1,0 +1,14 @@
+version: '3'
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+  example-exporter:
+    build: ./ # ディレクトリの内容をビルドしたimageを使う
+    container_name: example-exporter
+    ports:
+      - 2112:2112
