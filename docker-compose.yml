@@ -1,14 +1,52 @@
-version: '3'
+version: '3.8'
 services:
+  exporter: # 自作Exporter
+    build: ./
+    container_name: exporter
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v2.24.1
     container_name: prometheus
+    command:
+      [
+        "--config.file=/etc/prometheus/prometheus.yml",
+        "--web.external-url=http://localhost/prometheus",
+        "--web.route-prefix=/",
+      ]
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      [
+        "./deployment/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml",
+        "./deployment/prometheus/rules.yml:/etc/prometheus/rules.yml",
+      ]
+  alertmanager:
+    image: prom/alertmanager:v0.21.0
+    container_name: alertmanager
+    command:
+      [
+        "--config.file=/etc/alertmanager/alertmanager.yml",
+        "--web.external-url=http://localhost/alertmanager",
+        "--web.route-prefix=/",
+      ]
+    volumes:
+      [
+        "./deployment/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml",
+      ]
+  grafana:
+    image: grafana/grafana:7.3.7
+    container_name: grafana
+    volumes:
+      [
+        "./deployment/grafana/grafana.ini:/etc/grafana/grafana.ini",
+        "./deployment/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml",
+        "./deployment/grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboard.yaml",
+        "./deployment/grafana/dashboard.json:/var/lib/grafana/dashboards/dashboard.json",
+      ]
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    volumes:
+      [
+        "./deployment/nginx/default.conf:/etc/nginx/conf.d/default.conf",
+        "./deployment/nginx/index.html:/usr/share/nginx/html/index.html",
+      ] 
     ports:
-      - 9090:9090
-  example-exporter:
-    build: ./ # ディレクトリの内容をビルドしたimageを使う
-    container_name: example-exporter
-    ports:
-      - 2112:2112
+      - 80:80
